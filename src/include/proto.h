@@ -1,7 +1,6 @@
 #pragma once
 
 #define XXCC_LINUX
-// #define XXCC_GUI
 #define XXCC_GUI
 #define XXCC_EPF
 
