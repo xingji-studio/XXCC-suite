@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string.h>
 #include <proto.h>
 
 using namespace std;
@@ -74,7 +75,7 @@ int main(int argc, char *argv[], char *envp[])
 
         // 合成编译命令
         strcat(command, "clang++ ");
-        strcat(command, "-Wall -ffreestanding -fno-builtin -m64 -std=c++11 -fno-stack-protector -fno-exceptions -fshort-wchar -nostdinc -Wno-writable-strings -c ");
+        strcat(command, "-Wall -ffreestanding -fno-builtin -m64 -std=c++11 -fno-stack-protector -fno-exceptions -fshort-wchar -nostdinc -I ./include -Wno-writable-strings -c ");
 
         for (int j = 0; j < input_arg_count; j++)
         {
@@ -122,15 +123,6 @@ int main(int argc, char *argv[], char *envp[])
 
     // 链接
     system(linker_command);
-
-#ifdef XXCC_EPF
-    char output_file_name_copy[256];
-    strcpy(output_file_name_copy, output_file_name);
-    change_exname(output_file_name_copy, "epf");
-    rename_file(output_file_name_copy, output_file_name);
-#elif defined(XXCC_ELF)
-    // do nothing
-#endif
 
     // 完成任务！
 
