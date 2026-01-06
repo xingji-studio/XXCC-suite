@@ -2,7 +2,7 @@
 
 #define XXCC_LINUX
 // #define XXCC_GUI
-#define
+#define XXCC_TUI
 #define XXCC_EPF
 
 // command.cpp
