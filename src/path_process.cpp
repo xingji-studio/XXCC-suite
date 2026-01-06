@@ -20,3 +20,22 @@ void get_file_name(char *name, char *path)
         p++; q++;
     }
 }
+
+void change_exname(char *path, char *exname)
+{
+    char *p = path;
+    while (*p)
+        p++;
+
+    while (*p != '.')
+        p--;
+
+    p++;
+
+    char *q = exname;
+    while (*q)
+    {
+        *p = *q;
+        p++; q++;
+    }
+}

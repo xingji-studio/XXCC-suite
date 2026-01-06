@@ -123,6 +123,15 @@ int main(int argc, char *argv[], char *envp[])
     // 链接
     system(linker_command);
 
+#ifdef XXCC_EPF
+    char output_file_name_copy[256];
+    strcpy(output_file_name_copy, output_file_name);
+    change_exname(output_file_name_copy, "epf");
+    rename_file(output_file_name_copy, output_file_name);
+#elif defined(XXCC_ELF)
+    // do nothing
+#endif
+
     // 完成任务！
 
     return 0;
