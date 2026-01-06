@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string.h>
-#include <proto.h>
+#include "./include/proto.h"
 
 using namespace std;
 
@@ -127,4 +127,50 @@ int main(int argc, char *argv[], char *envp[])
     // 完成任务！
 
     return 0;
+}
+
+#ifdef XXCC_LINUX
+
+void create_dir(char *path)
+{
+    char command[256];
+    memset(command, 0, 256);
+    strcat(command, "mkdir ");
+    strcat(command, path);
+    system(command);
+}
+
+#endif
+
+#ifdef XXCC_WINDOWS
+
+void create_dir(char *path)
+{
+    char command[256];
+    memset(command, 0, 256);
+    strcat(command, "mkdir ");
+    strcat(command, path);
+    system(command);
+}
+
+#endif
+
+void get_file_name(char *name, char *path)
+{
+    char *p = path;
+    char *q = name;
+
+    while (*p)
+        p++;
+
+    while (p != path && *p != '\\' && *p != '/')
+        p--;
+
+    if (p != path) p++;
+
+    while (*p)
+    {
+        *q = *p;
+        p++; q++;
+    }
 }
