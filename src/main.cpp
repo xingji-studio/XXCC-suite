@@ -102,6 +102,7 @@ int main(int argc, char *argv[], char *envp[])
     strcat(linker_command, "./obj-gui/stdio.cpp.o ");
     strcat(linker_command, "./obj-gui/libsys.cpp.o ");
     strcat(linker_command, "./obj-gui/krlibc.cpp.o ");
+    strcat(linker_command, "./obj-gui/liballoc-x86_64.a ");
     strcat(linker_command, "./obj-gui/arch/x86_64/crt0.S.o ");
 
     // 根据情况选择
