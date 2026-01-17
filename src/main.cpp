@@ -26,6 +26,18 @@ int main(int argc, char *argv[], char *envp[])
         return 0;
     }
 
+    if (argc == 2)
+    {
+        // 有一个参数
+        if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "-version") == 0)
+        {
+            cout << "XINGJI XJ380 C/C++ Compiler 2026v2" << endl;
+            cout << "Copyright(C) XINGJI Interactive Software 2017 - 2026 All rights reserved." << endl;
+            cout << "A XINGJI XJ380 Develop Department Production. XINGJI Present." << endl;
+            return 0;
+        }
+    }
+
     int i;
     for (i = 1; i < argc; i++)
     {
@@ -75,7 +87,7 @@ int main(int argc, char *argv[], char *envp[])
 
         // 合成编译命令
         strcat(command, "clang++ ");
-        strcat(command, "-Wall -ffreestanding -fno-builtin -m64 -std=c++11 -fno-stack-protector -fno-exceptions -fshort-wchar -nostdinc -I ./include -Wno-writable-strings -c ");
+        strcat(command, "-Wall -ffreestanding -fno-builtin -m64 -std=c++11 -fno-stack-protector -fno-exceptions -fshort-wchar -nostdinc -I ./include -Wno-writable-strings -D __XJ380_OS__ -c ");
 
         for (int j = 0; j < input_arg_count; j++)
         {
