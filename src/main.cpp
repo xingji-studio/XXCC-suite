@@ -31,7 +31,7 @@ int main(int argc, char *argv[], char *envp[])
         // 有一个参数
         if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "-version") == 0)
         {
-            cout << "XINGJI XJ380 C/C++ Compiler 2026v2" << endl;
+            cout << "XINGJI XJ380 C/C++ Compiler 2026v3" << endl;
             cout << "Copyright(C) XINGJI Interactive Software 2017 - 2026 All rights reserved." << endl;
             cout << "A XINGJI XJ380 Develop Department Production. XINGJI Present." << endl;
             return 0;
