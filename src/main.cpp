@@ -106,7 +106,7 @@ int main(int argc, char *argv[], char *envp[])
     // 生成链接命令
     char linker_command[1024];
     memset(linker_command, 0, 1024);
-    strcat(linker_command, "ld -z muldefs -Ttext=0x200000 ");
+    strcat(linker_command, "ld -Ttext=0x200000 ");
     strcat(linker_command, "./obj-gui/xtuiapi.cpp.o ");
     strcat(linker_command, "./obj-gui/xguiapi.cpp.o ");
     strcat(linker_command, "./obj-gui/unistd.cpp.o ");
