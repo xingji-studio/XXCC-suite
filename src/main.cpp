@@ -13,6 +13,19 @@ int     input_arg_count = 0;
 bool    use_Clang = false;
 bool    use_Gcc   = false;
 
+const int OBJ_COUNT = 9;
+char object_file_list[OBJ_COUNT][256] = {
+    "./obj-gui/xtuiapi.cpp.o ",
+    "./obj-gui/xguiapi.cpp.o ",
+    "./obj-gui/unistd.cpp.o ",
+    "./obj-gui/stdlib.cpp.o ",
+    "./obj-gui/stdio.cpp.o ",
+    "./obj-gui/libsys.cpp.o ",
+    "./obj-gui/krlibc.cpp.o ",
+    "./obj-gui/liballoc-x86_64.a ",
+    "./obj-gui/arch/x86_64/crt0.S.o ",
+};
+
 int main(int argc, char *argv[], char *envp[])
 {
     if (argc <= 1)
@@ -108,22 +121,17 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     // 生成链接命令
-    char linker_command[1024];
+    char linker_command[65536];
     memset(linker_command, 0, 1024);
 #ifdef XXCC_WINDOWS
     strcat(linker_command, "lld -flavor gnu -m elf_x86_64 -Ttext=0x200000 ");
 #else
     strcat(linker_command, "ld -Ttext=0x200000 ");
 #endif
-    strcat(linker_command, "./obj-gui/xtuiapi.cpp.o ");
-    strcat(linker_command, "./obj-gui/xguiapi.cpp.o ");
-    strcat(linker_command, "./obj-gui/unistd.cpp.o ");
-    strcat(linker_command, "./obj-gui/stdlib.cpp.o ");
-    strcat(linker_command, "./obj-gui/stdio.cpp.o ");
-    strcat(linker_command, "./obj-gui/libsys.cpp.o ");
-    strcat(linker_command, "./obj-gui/krlibc.cpp.o ");
-    strcat(linker_command, "./obj-gui/liballoc-x86_64.a ");
-    strcat(linker_command, "./obj-gui/arch/x86_64/crt0.S.o ");
+    for (int i = 0; i < OBJ_COUNT; i++)
+    {
+        strcat(linker_command, object_file_list[i]);
+    }
 
     // 根据情况选择
 #ifdef XXCC_GUI
