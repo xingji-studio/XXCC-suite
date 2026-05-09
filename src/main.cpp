@@ -86,7 +86,11 @@ int main(int argc, char *argv[], char *envp[])
         strcpy(object_file_name[i], output_name);
 
         // 合成编译命令
+#ifdef XXCC_WINDOWS
+        strcat(command, "clang++ --target=x86_64-unknown-elf ");
+#else
         strcat(command, "clang++ ");
+#endif
         strcat(command, "-Wall -ffreestanding -fno-builtin -m64 -std=c++11 -fno-stack-protector -fno-exceptions -fshort-wchar -nostdinc -I ./include -Wno-writable-strings -D __XJ380_OS__ -c ");
 
         for (int j = 0; j < input_arg_count; j++)
@@ -106,7 +110,11 @@ int main(int argc, char *argv[], char *envp[])
     // 生成链接命令
     char linker_command[1024];
     memset(linker_command, 0, 1024);
+#ifdef XXCC_WINDOWS
+    strcat(linker_command, "lld -flavor gnu -m elf_x86_64 -Ttext=0x200000 ");
+#else
     strcat(linker_command, "ld -Ttext=0x200000 ");
+#endif
     strcat(linker_command, "./obj-gui/xtuiapi.cpp.o ");
     strcat(linker_command, "./obj-gui/xguiapi.cpp.o ");
     strcat(linker_command, "./obj-gui/unistd.cpp.o ");
