@@ -3,7 +3,7 @@
  *      XINGJI XJ380 Application Compile Tools (XACT) 
  *      XACT C\C++ Header
  *      XJ380API XAPI Edition TUI Part
- *      Release Version 1.0.0 - 2025/5/10
+ *      Release Version 1.2.0 - 2026/1/16
  *      Copyright(C) XINGJI Interactive Software 2017 - 2026 All rights reserved.
  * 
  *      A XINGJI Interactive Software Production
@@ -13,8 +13,21 @@
 #pragma once
 
 #include "stdint.h"
+#include "./libsys.h"
+#include "./liballoc/alloc.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // define
+#define PTE_PRESENT    (0x1 << 0)
+#define PTE_WRITEABLE  (0x1 << 1)
+#define PTE_USER       (0x1 << 2)
+#define PTE_FLAG_U     (0x1 << 3)
+#define PTE_HUGE       (0x1 << 7)
+#define PTE_NO_EXECUTE (((uint64_t)0x1) << 63)
+
 typedef enum {
     XUT_Root,
     XUT_System,
@@ -55,8 +68,8 @@ typedef struct
 // 3-1
 void xapi_Output(WSTR str);
 void xapi_Input(WSTR str);
-char xapi_Getch();
-void xapi_EndLine();
+char xapi_Getch(void);
+void xapi_EndLine(void);
 void xapi_PrintLine(WSTR str);
 void xapi_Printf(WSTR fmt, ...);
 void xapi_OutputSerial(WSTR str);
@@ -80,6 +93,7 @@ UINT64 xapi_DeleteFile(WSTR path);
 UINT64 xapi_RenameFile(WSTR old_path, WSTR new_path);
 UINT64 xapi_ReadFile(WSTR filename, char *buffer, UINT64 size, UINT64 offset);
 UINT64 xapi_WriteFile(WSTR filename, char *buffer, UINT64 size, UINT64 offset);
+UINT64 xapi_Rmdir(WSTR path);
 
 // 3-3
 UINT64 	xcr_char2int(WSTR str);
@@ -89,19 +103,33 @@ UINT32 	toRGB(UINT8 r, UINT8 g, UINT8 b);
 UINT32 	toRGBA(UINT32 color);
 
 // 3-4
-UINT64  xapi_Fork();
+UINT64  xapi_Fork(void);
 UINT64  xapi_Execve(WSTR filename, WSTR argv[], WSTR envp[]);
 void	xapi_Exit(UINT64 value);
+UINT64  xapi_GetTaskList(XapiTaskInfo *buffer, UINT64 max_count);
+UINT64  xapi_KillProcess(UINT64 pid);
 
 // 3-5
 void	xapi_GetSystemVersion(WSTR version);
-UINT64	xapi_GetTime();
+UINT64	xapi_GetTime(void);
 void	xapi_GetCurrentUser(UserInfo *user_info);
 void	xapi_GetTimeX(TimeType *tm);
 void	xapi_GetCpuModel(WSTR version);
-UINT64	xapi_GetMemorySize();
+UINT64	xapi_GetMemorySize(void);
 
 // 3-6
 void	xapi_Broken(WSTR broken_info);
 void	xapi_SendAppMessage(WSTR title, WSTR text);
 void 	xapi_Sleep(UINT64 ms);
+void 	xapi_Run(WSTR path);
+UINT64  xapi_RunArgs(WSTR path, WSTR argv[]);
+void 	xapi_FlushTime(void);
+
+// 3-7
+void   *xapi_AllocateMemory(UINT64 size);
+void    xapi_FreeMemory(void *ptr);
+void   *xapi_MapMemory(void *ptr, uint64_t size, uint32_t flags);
+
+#ifdef __cplusplus
+}
+#endif

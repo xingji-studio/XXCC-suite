@@ -14,3 +14,5 @@
 
 #include "xguiapi.h"
 #include "xtuiapi.h"
+#include "xapi_xml.h"
+#include "webrequest.h"

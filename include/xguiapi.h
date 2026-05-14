@@ -3,7 +3,7 @@
  *      XINGJI XJ380 Application Compile Tools (XACT) 
  *      XACT C\C++ Header
  *      XJ380API XAPI Edition GUI Part
- *      Release Version 1.0.0 - 2025/5/10
+ *      Release Version 1.2.0 - 2026/1/16
  *      Copyright(C) XINGJI Interactive Software 2017 - 2026 All rights reserved.
  * 
  *      A XINGJI Interactive Software Production
@@ -13,47 +13,55 @@
 #pragma once
 
 #include "stdint.h"
+#include "./liballoc/alloc.h"
 
-// define
-typedef UINT64 		HDLE;
-typedef void 		(*MsgPrcor)(
-	UINT64 Type, 
-	UINT64 hData, 
-	UINT64 lData
-);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-struct XWINDOW
+typedef UINT64 HDLE;
+typedef void (*MsgPrcor)(UINT64 Type, UINT64 hData, UINT64 lData);
+
+typedef struct XWINDOW
 {
-    UINT32 	width;
-    UINT32 	height;
-    WSTR 	title;
-    UINT8 	sets;
-};
+    UINT32 width;
+    UINT32 height;
+    WSTR   title;
+    UINT8  sets;
+} XWINDOW;
 
 #pragma pack(1)
 
-struct XCOLOR
+typedef struct XCOLOR
 {
-	UINT8 	Red;
-	UINT8 	Green;
-	UINT8 	Blue;
-};
+    UINT8 Red;
+    UINT8 Green;
+    UINT8 Blue;
+} XCOLOR;
 
 #pragma pack()
 
-struct XCOLORA
+typedef struct XCOLORA
 {
-	UINT8 	Red;
-	UINT8 	Green;
-	UINT8 	Blue;
-	UINT8	Alpha;
-};
+    UINT8 Red;
+    UINT8 Green;
+    UINT8 Blue;
+    UINT8 Alpha;
+} XCOLORA;
+
+typedef struct 
+{
+	UINT64 	CRLid;
+	WSTR	text;
+} RightMenuItem;
 
 
 // 4-1
 #define XWIN_NORMAL				0
 #define XWIN_FRAME_OFF			1
 #define XWIN_FULL_SCR			2
+#define XWIN_TYPE_MASK         0x0f
+#define XWIN_SUPPORT_RESIZEABLE  0x80
 
 void  xapi_CreateWindow(
 	HDLE*		handle,
@@ -106,6 +114,24 @@ void  xapi_DrawRect(
 	UINT32 	y2,
 	UINT32 	color,
 	bool  	fill
+);
+
+INT32 xapi_DrawSvg(
+	HDLE  	handle,
+	UINT32  x,
+	UINT32  y,
+	UINT32  width,
+	WSTR    svgText,
+	bool    enableTrans
+);
+
+INT32 xapi_DrawFA(
+	HDLE  	handle,
+	UINT32  x,
+	UINT32  y,
+	UINT32  width,
+	char   *name,
+	bool    enableTrans
 );
 
 // void  xapi_DrawCircle(
@@ -174,16 +200,15 @@ void xapi_DrawPicture(
 	WSTR  	path
 );
 
+void xapi_GetPicSize(
+	UINT32	*width,
+	UINT32	*height,
+	WSTR  	 path
+);
+
 // 4-4
+#include "libsys.h"
 void SetMsgPrcor(HDLE handle, MsgPrcor func);
-#define MSG_CHAR		0
-#define MSG_SPCHAR		7
-#define MSG_MOVE		1
-#define MSG_LBUTTON		2
-#define MSG_RBUTTON		3
-#define MSG_MBUTTON		4
-#define MSG_ROLLER		5
-#define MSG_CRL			6
 
 // 4-5
 void  xapi_ReadBuffer(
@@ -204,6 +229,15 @@ void xapi_WriteBuffer(
 	XCOLOR*  	buffer
 );
 
+void xapi_ReadBufferA(
+	HDLE  	 	handle,
+	UINT32  	x,
+	UINT32  	y,
+	UINT32  	width,
+	UINT32		height,
+	XCOLOR*  	buffer
+);
+
 void xapi_WriteBufferA(
 	HDLE  	 	handle,
 	UINT32  	x,
@@ -215,6 +249,14 @@ void xapi_WriteBufferA(
 
 void xapi_RefreshWindow(
 	HDLE		handle
+);
+
+void xapi_RefreshPartWindow(
+	HDLE 	handle,
+	UINT32  x1,
+	UINT32  y1,
+	UINT32  x2,
+	UINT32  y2
 );
 
 // 4-6
@@ -233,3 +275,30 @@ void xapi_ButtonEmp(
 	UINT64  y,
 	WSTR  	text
 );
+
+void xapi_DeleteButton(
+	HDLE  	handle,
+	UINT64  CRLid
+);
+
+void xapi_RegisterRightButtonMenu(
+	HDLE  			handle,
+	RightMenuItem  *items,
+	UINT64 			count
+);
+
+void xapi_DeleteRightButtonMenu(HDLE handle);
+
+#ifdef __cplusplus
+}
+
+inline INT32 xapi_DrawSvg(HDLE handle, UINT32 x, UINT32 y, UINT32 width, WSTR svgText)
+{
+	return xapi_DrawSvg(handle, x, y, width, svgText, false);
+}
+
+inline INT32 xapi_DrawFA(HDLE handle, UINT32 x, UINT32 y, UINT32 width, char *name)
+{
+	return xapi_DrawFA(handle, x, y, width, name, false);
+}
+#endif

@@ -3,6 +3,16 @@
 #include "./stdint.h"
 #include "./xposix/stdarg.h"
 
+#if !defined(__cplusplus) && !defined(__bool_true_false_are_defined)
+typedef unsigned char bool;
+#ifndef true
+#define true 1
+#endif
+#ifndef false
+#define false 0
+#endif
+#endif
+
 #ifdef __cplusplus // Fuck you C++
 extern "C" {
 #endif
@@ -190,6 +200,9 @@ typedef enum num_size
 #define IS_ALPHA(a)            (((a) >= 'A' && (a) <= 'Z') || ((a) >= 'a' && (a) <= 'z'))
 
 // 格式化输出函数
+#ifdef __cplusplus
+extern "C" {
+#endif
 int snprintf(char *str, size_t size, const char *format, ...);
 int sprintf(char *str, const char *format, ...);
 int vsnprintf(char *str, size_t size, const char *format, va_list ap);
@@ -200,7 +213,8 @@ size_t wnumber(Writer *writer, num_formatter_t fmter, num_fmt_type type);
 
 void uint64_to_string(uint64_t num, char *buffer, int buffer_size);
 void int_to_string(int num, char *buffer, int buffer_size);
-
-void merge_string(char *dst, char *src);
+#ifdef __cplusplus
+}
+#endif
 
 // static inline void *memmove(void *dest, const void *src, size_t n);
