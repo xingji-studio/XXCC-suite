@@ -315,7 +315,7 @@ int main(int argc, char *argv[], char *envp[])
 
 #ifdef XXCC_LINUX
 
-void create_dir(char *path)
+void create_dir(const char *path)
 {
     char command[256];
     memset(command, 0, 256);
@@ -328,7 +328,7 @@ void create_dir(char *path)
 
 #ifdef XXCC_WINDOWS
 
-void create_dir(char *path)
+void create_dir(const char *path)
 {
     char command[256];
     memset(command, 0, 256);
@@ -341,7 +341,7 @@ void create_dir(char *path)
 
 #ifdef XXCC_LINUX
 
-void delete_dir(char *path)
+void delete_dir(const char *path)
 {
     char command[256];
     memset(command, 0, 256);
@@ -354,7 +354,7 @@ void delete_dir(char *path)
 
 #ifdef XXCC_WINDOWS
 
-void delete_dir(char *path)
+void delete_dir(const char *path)
 {
     char command[256];
     memset(command, 0, 256);
