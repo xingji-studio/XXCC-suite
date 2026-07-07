@@ -1,3 +1,18 @@
+clean:
+	@echo "========================================"
+	@echo "  Clean the productions that produced by building..."
+	@echo "  清理构建产物中..."
+	@echo "========================================"
+	@if [ -d "release" ]; then \
+		echo "  移除 release 目录..."; \
+		rm -rf release; \
+		echo "  release 目录已删除"; \
+	else \
+		echo "   release 目录不存在，无需清理"; \
+	fi
+	@echo "========================================"
+	@echo "  清理完成！"
+
 win:
 #	Windows
 	mkdir release
