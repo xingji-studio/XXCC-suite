@@ -3,3 +3,6 @@ xxcc-temp-out
 example.epf
 example.elf
 /release
+*build/
+*dist/
+*.spec
