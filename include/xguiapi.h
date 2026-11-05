@@ -13,6 +13,7 @@
 #pragma once
 
 #include "stdint.h"
+#include "xtext.h"
 #include "./liballoc/alloc.h"
 
 #ifdef __cplusplus
@@ -49,17 +50,22 @@ typedef struct XCOLORA
     UINT8 Alpha;
 } XCOLORA;
 
-typedef struct 
+typedef struct
 {
 	UINT64 	CRLid;
 	WSTR	text;
 } RightMenuItem;
+
+#define XAPI_TEXT_INPUT_BOX_BUFFER_SIZE 256
 
 
 // 4-1
 #define XWIN_NORMAL				0
 #define XWIN_FRAME_OFF			1
 #define XWIN_FULL_SCR			2
+#define XWIN_DESKTOP            3
+#define XWIN_DOCK               4
+#define XWIN_LOGIN              5
 #define XWIN_TYPE_MASK         0x0f
 #define XWIN_SUPPORT_RESIZEABLE  0x80
 
@@ -170,6 +176,23 @@ void xapi_DrawSWText(
 	UINT32  color
 );
 
+// Signed client coordinates; all right/bottom edges are exclusive.
+typedef struct XTextRect
+{
+    INT32 x, y, width, height;
+} XTextRect;
+
+INT64 xapi_GetTextMetrics(const XTextStyle *style, const char *text, XTextMetrics *metrics);
+INT64 xapi_GetTextPosition(const XTextStyle *style, const char *text, UINT32 byte_offset, INT32 *position_x);
+INT64 xapi_DrawTextEx(HDLE handle, INT32 x, INT32 y, const char *text, const XTextStyle *style,
+                     UINT32 color, const XTextRect *clip);
+INT64 xapi_DrawTextBaseline(HDLE handle, INT32 x, INT32 y, const char *text, const XTextStyle *style,
+                           UINT32 color, const XTextRect *clip);
+void xapi_DrawTextTop(HDLE handle, INT32 x, INT32 y, WSTR text, UINT32 size, UINT32 color);
+void xapi_DrawMonoTextTop(HDLE handle, INT32 x, INT32 y, WSTR text, UINT32 color);
+void xapi_DrawTextInRect(HDLE handle, INT32 x, INT32 y, INT32 width, INT32 height, WSTR text,
+                        UINT32 size, UINT32 color);
+
 UINT64 xapi_CalcTextWidth(WSTR str, UINT32 size);
 
 // 4-3
@@ -200,6 +223,13 @@ void xapi_DrawPicture(
 	WSTR  	path
 );
 
+bool xapi_LoadPicture(
+	XCOLORA *buffer,
+	UINT32   width,
+	UINT32   height,
+	WSTR     path
+);
+
 void xapi_GetPicSize(
 	UINT32	*width,
 	UINT32	*height,
@@ -209,6 +239,43 @@ void xapi_GetPicSize(
 // 4-4
 #include "libsys.h"
 void SetMsgPrcor(HDLE handle, MsgPrcor func);
+
+enum XAPI_SPECIAL_KEY
+{
+    XKEY_ESC = 128,
+    XKEY_BACKSPACE,
+    XKEY_TAB,
+    XKEY_ENTER,
+    XKEY_CAPS,
+    XKEY_SHIFT,
+    XKEY_CTRL,
+    XKEY_ALT,
+    XKEY_SPACE,
+    XKEY_F1,
+    XKEY_F2,
+    XKEY_F3,
+    XKEY_F4,
+    XKEY_F5,
+    XKEY_F6,
+    XKEY_F7,
+    XKEY_F8,
+    XKEY_F9,
+    XKEY_F10,
+    XKEY_F11,
+    XKEY_F12,
+    XKEY_NUML,
+    XKEY_SCROLL,
+    XKEY_HOME,
+    XKEY_UP,
+    XKEY_PAGE_UP,
+    XKEY_LEFT,
+    XKEY_RIGHT,
+    XKEY_END,
+    XKEY_DOWN,
+    XKEY_PAGE_DOWN,
+    XKEY_INSERT,
+    XKEY_DELETE
+};
 
 // 4-5
 void  xapi_ReadBuffer(
@@ -247,6 +314,24 @@ void xapi_WriteBufferA(
 	XCOLORA*  	buffer
 );
 
+// NULL buffer queries dimensions only. Capacity is in tightly packed RGBA pixels.
+// Returns 0 on success, otherwise a negative errno encoded as UINT64.
+// -EAGAIN: compositor busy; -ENOSPC: query dimensions again and resize the buffer.
+// Actual pixel reads post a kernel ALERT and fail with -EACCES while a secret process exists.
+// Notice-queue errors fail capture without delivering pixels; dimension-only queries stay available.
+UINT64 xapi_CaptureScreen(
+    XCOLORA *buffer,
+    UINT64   pixel_capacity,
+    UINT32  *width,
+    UINT32  *height
+);
+
+// A successful Begin returns an opaque drawing surface; negative values are errno.
+// End consumes the surface even if a concurrent resize makes it return -EAGAIN.
+INT64 xapi_BeginPaint(HDLE window, UINT32 width, UINT32 height);
+INT64 xapi_EndPaint(HDLE window, HDLE surface);
+void xapi_CancelPaint(HDLE window, HDLE surface);
+
 void xapi_RefreshWindow(
 	HDLE		handle
 );
@@ -281,6 +366,71 @@ void xapi_DeleteButton(
 	UINT64  CRLid
 );
 
+void xapi_PutSwitch(
+	HDLE  	handle,
+	UINT64  x,
+	UINT64  y,
+	UINT64  status,
+	UINT64  CRLid
+);
+
+void xapi_SetSwitch(
+	HDLE  	handle,
+	UINT64  CRLid,
+	UINT64  status
+);
+
+void xapi_DeleteSwitch(
+	HDLE  	handle,
+	UINT64  CRLid
+);
+
+void xapi_PutVerticalScrollBar(
+	HDLE  	handle,
+	UINT64  x,
+	UINT64  y,
+	UINT64  length,
+	UINT64  thumbLength,
+	UINT64  CRLid
+);
+
+void xapi_PutHorizontalScrollBar(
+	HDLE  	handle,
+	UINT64  x,
+	UINT64  y,
+	UINT64  length,
+	UINT64  thumbLength,
+	UINT64  CRLid
+);
+
+void xapi_DeleteScrollBar(
+	HDLE  	handle,
+	UINT64  CRLid
+);
+
+void xapi_SetScrollBarPosition(
+	HDLE  	handle,
+	UINT64  CRLid,
+	UINT64  position
+);
+
+UINT64 xapi_PutTextInputBox(
+	HDLE    handle,
+	UINT64  x,
+	UINT64  y,
+	UINT64  width,
+	WSTR    text
+);
+
+void xapi_GetTextInputBox(
+	UINT64 id,
+	WSTR   text
+);
+
+void xapi_DeleteTextInputBox(
+	UINT64 id
+);
+
 void xapi_RegisterRightButtonMenu(
 	HDLE  			handle,
 	RightMenuItem  *items,
@@ -300,5 +450,18 @@ inline INT32 xapi_DrawSvg(HDLE handle, UINT32 x, UINT32 y, UINT32 width, WSTR sv
 inline INT32 xapi_DrawFA(HDLE handle, UINT32 x, UINT32 y, UINT32 width, char *name)
 {
 	return xapi_DrawFA(handle, x, y, width, name, false);
+}
+#endif
+
+#include "xanimation.h"
+
+#include "xhighlight.h"
+
+#include "xpaint.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+INT64 xapi_PaintControls(HDLE window, HDLE surface, XPaintControl *items, UINT32 count);
+#ifdef __cplusplus
 }
 #endif

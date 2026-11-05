@@ -1,4 +1,5 @@
 #pragma once
+#include "xclipboard.h"
 
 #include "./stdint.h"
 #include "./krlibc.h"
@@ -131,6 +132,7 @@
 #define SYS_NEWFSTATAT 262
 #define SYS_UNLINKAT 263
 #define SYS_RENAMEAT 264
+#define SYS_UTIMENSAT 280
 #define SYS_LINKAT 265
 #define SYS_SYMLINKAT 266
 #define SYS_READLINKAT 267
@@ -169,7 +171,9 @@
 #define XAPI_OPEN_FILE      7387
 #define XAPI_CLOSE_FILE     7388
 
-#define XAPI_SEARCH_FILE    7416
+#define XAPI_SEARCH_FILE       7416
+#define XAPI_SEARCH_FILE_FREEM 7471
+#define XAPI_GET_SYSTEM_STATS  7472
 
 #define XAPI_MAKEDIR        7425
 #define XAPI_CREATE_FILE    7420
@@ -179,6 +183,7 @@
 #define XAPI_WRITE_FILE     7424
 
 #define XAPI_REMOVEDIR      7444
+#define XAPI_FILE_DIALOG    7450
 
 // P3.4
 #define XAPI_FORK   7389
@@ -196,15 +201,52 @@
 #define XAPI_GET_CPU_MODEL      7434
 #define XAPI_GET_MEMORY_SIZE    7435
 
+#define XAPI_GET_TIME_NANO      7459
+
 // P3.6
 #define XAPI_BROKEN         7428
 #define XAPI_SEND_APP_MSG   7429
 #define XAPI_SLEEP          7430
 
 #define XAPI_RUN            7439
-#define XAPI_RUN_ARGS       7450
+#define XAPI_RUN_ARGS       7451
+#define XAPI_USER_OOBE_REQUIRED 7452
+#define XAPI_USER_LIST          7453
+#define XAPI_USER_LOGIN         7454
+#define XAPI_USER_CREATE_FIRST  7455
 
 #define XAPI_FLUSH_TIME     7445
+#define XAPI_POWER_ACTION   7464
+
+// P3.6.2
+#define XAPI_NOTIFY_SEND    7465
+#define XAPI_NOTIFY_SET_PROCOR 7466
+
+#define XPOWER_REBOOT   1
+#define XPOWER_SHUTDOWN 2
+
+typedef enum {
+    XNOTIFY_ICON_NONE = 0,
+    XNOTIFY_ICON_INFO = 1,
+    XNOTIFY_ICON_SUCCESS = 2,
+    XNOTIFY_ICON_WARNING = 3,
+    XNOTIFY_ICON_ERROR = 4,
+    XNOTIFY_ICON_APP = 5
+} XNotifyBuiltinIcon;
+
+typedef struct {
+    UINT64 key;
+    char  *title;
+    char  *text;
+    UINT64 builtin_icon;
+    char  *icon_path;
+    char  *action0_text;
+    UINT64 action0_id;
+    char  *action1_text;
+    UINT64 action1_id;
+} XApiNotificationRequest;
+
+typedef void (*XApiNotifyPrcor)(UINT64 notification_id, UINT64 action_id);
 
 // P3.7
 #define XAPI_MALLOC         7441
@@ -242,6 +284,9 @@
 #define XAPI_DRAW_SVG       7446
 #define XAPI_DRAW_FA        7447
 
+#define XAPI_LOAD_PICTURE   7463
+#define XAPI_CAPTURE_SCREEN 7473
+
 #define XAPI_TASK_NAME_LEN 32
 
 typedef struct
@@ -254,11 +299,22 @@ typedef struct
     UINT64 thread_count;
     UINT64 window_count;
     UINT64 memory_bytes;
+    UINT64 cpu_runtime_ticks;
     UINT32 process_status;
     UINT32 thread_status;
     char   process_name[XAPI_TASK_NAME_LEN];
     char   thread_name[XAPI_TASK_NAME_LEN];
 } XapiTaskInfo;
+
+typedef struct
+{
+    UINT64 cpu_total_ticks;
+    UINT64 cpu_busy_ticks;
+    UINT64 cpu_count;
+    UINT64 memory_total_bytes;
+    UINT64 memory_free_bytes;
+    UINT64 timestamp_ns;
+} XapiSystemStats;
 
 // P4.4
 #define XAPI_SET_MSH_PROCOR 7405
@@ -272,6 +328,14 @@ typedef struct
 #define MSG_CRL     6
 #define MSG_SPCHAR  7
 #define MSG_RESIZE  8
+#define MSG_KEYUP   9
+#define MSG_KEYDOWN 10
+#define MSG_KEYLONGPRESS 16
+#define MSG_LBUTTONDOWN 11
+#define MSG_LBUTTONUP   12
+#define MSG_LBUTTON_PRESS  13
+#define MSG_MBUTTON_PRESS  14
+#define MSG_RBUTTON_PRESS  15
 
 // P4.5
 #define XAPI_READBUFFER     7406
@@ -291,8 +355,27 @@ typedef struct
 #define XAPI_REG_RB_MENU    7436
 #define XAPI_URG_RB_MENU    7437
 
-#define XWIN_TYPE_MASK         0x0f
-#define XWIN_SUPPORT_RESIZEABLE  0x80
+#define XAPI_PUT_TEXT_INBOX 7456
+#define XAPI_GET_TEXT_INBOX 7457
+#define XAPI_DEL_TEXT_INBOX 7458
+
+#define XAPI_PUT_SWITCH     7460
+#define XAPI_SET_SWITCH     7461
+#define XAPI_DEL_SWITCH     7462
+
+#define XAPI_PUT_VERTICAL_SCROLL_BAR   7467
+#define XAPI_PUT_HORIZONTAL_SCROLL_BAR 7468
+#define XAPI_DELETE_SCROLL_BAR         7469
+#define XAPI_SET_SCROLL_BAR_POSITION   7470
+
+#define XWIN_NORMAL             0
+#define XWIN_FRAME_OFF          1
+#define XWIN_FULL_SCR           2
+#define XWIN_DESKTOP            3
+#define XWIN_DOCK               4
+#define XWIN_LOGIN              5
+#define XWIN_TYPE_MASK          0x0f
+#define XWIN_SUPPORT_RESIZEABLE 0x80
 
 #ifdef __cplusplus
 extern "C" {
@@ -301,3 +384,39 @@ uint64_t enter_syscall(uint64_t syscall_number, uint64_t arg1, uint64_t arg2, ui
 #ifdef __cplusplus
 }
 #endif
+
+// Input method ABI v1. MSG_CHAR continues to carry one packed UTF-8 character.
+#define XAPI_IME_REGISTER         7474
+#define XAPI_IME_ENUM             7475
+#define XAPI_IME_GET_STATE        7476
+#define XAPI_IME_SET_ACTIVE       7477
+#define XAPI_IME_UNREGISTER       7478
+#define XAPI_IME_ATTACH           7479
+#define XAPI_IME_GET_EVENT        7480
+#define XAPI_IME_REPLY_EVENT      7481
+#define XAPI_IME_UPDATE_UI        7482
+#define XAPI_IME_SET_MODE         7483
+#define XAPI_IME_SET_CONTEXT      7484
+#define XAPI_IME_USER_DATA        7485
+
+// Process-lifetime global screen capture protection.
+#define XAPI_SET_SECRET           7486
+
+// GUI animation ABI v1.
+#define XAPI_ANIMATION_START   7487
+#define XAPI_ANIMATION_CONTROL 7488
+#define XAPI_ANIMATION_QUERY   7489
+#define XAPI_ANIMATION_RELEASE 7490
+
+#include "xhighlight.h"
+
+#include "xaudio.h"
+
+#define XAPI_LIFT_PERMISSIONS 7496
+#define XAPI_GET_CURRENT_PERMISSIONS 7497
+#define XAPI_REQUEST_PERMISSIONS 7498
+#define XAPI_SPAWN_INHERITED 7499
+#define XAPI_QUERY_FILE_ACCESS 7500
+#define XAPI_REQUEST_FILE_ACCESS 7501
+
+#define XAPI_REQUEST_SPECIAL_PERMISSION 7502

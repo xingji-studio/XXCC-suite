@@ -232,7 +232,7 @@ void add_dependencies(std::vector<std::string> &command, const Options &options,
 
 void help()
 {
-    std::cout << "XINGJI XJ380 C/C++ Compiler 2026v4\n"
+    std::cout << "XINGJI XJ380 C/C++ Compiler 2026v5\n"
                  "Usage: xxcc [options] files... [-o output]\n"
                  "  -c / -S / -E          Compile / emit assembly / preprocess only\n"
                  "  --xxcc-sdk=PATH       SDK root containing include and obj-gui/obj-tui\n"
@@ -252,7 +252,7 @@ int run_driver(const std::vector<std::string> &args, const Profile &profile)
         return 0;
     }
     if (args.size() == 2 && (args[1] == "--version" || args[1] == "-version" || args[1] == "-v")) {
-        std::cout << "XINGJI XJ380 C/C++ Compiler 2026v4\n";
+        std::cout << "XINGJI XJ380 C/C++ Compiler 2026v5\n";
         return 0;
     }
     Options options = parse(args);
