@@ -124,13 +124,15 @@ fs::path find_sdk(const Options &options, const std::string &argv0, const Profil
         const fs::path root = fs::absolute(fs::u8path(supplied));
         if (!fs::is_directory(root / "include"))
             throw std::runtime_error("SDK include directory not found: '" + (root / "include").u8string() + "'");
+        if (options.stage == Stage::Link && !fs::is_directory(root / "lib" / "x86_64"))
+            throw std::runtime_error("SDK runtime directory not found: '" + (root / "lib" / "x86_64").u8string() + "'");
         return root;
     }
     fs::path candidate = executable_path(argv0).parent_path();
     // Support both an installed SDK beside the executable and release/{platform}.
     for (unsigned depth = 0; depth < 4; ++depth) {
         if (fs::is_directory(candidate / "include") &&
-            (options.stage != Stage::Link || fs::is_directory(candidate / (profile.tui ? "obj-tui" : "obj-gui"))))
+            (options.stage != Stage::Link || fs::is_directory(candidate / "lib" / "x86_64")))
             return candidate;
         const fs::path parent = candidate.parent_path();
         if (parent == candidate) break;
@@ -153,28 +155,25 @@ struct Runtime {
 
 Runtime load_runtime(const fs::path &sdk, const Profile &profile)
 {
-    const fs::path directory = sdk / (profile.tui ? "obj-tui" : "obj-gui");
+    // XACT CRT layout: include/ + lib/x86_64/{startup objects, archives}.
+    const fs::path directory = sdk / "lib" / "x86_64";
     Runtime result;
-    result.startup = directory / (profile.tui ? "constart.cpp.o" : "start.cpp.o");
+    result.startup = directory / (profile.tui ? "constart.o" : "start.o");
     require_file(result.startup);
-    require_file(directory / "arch/x86_64/crt0.S.o");
-    require_file(directory / "liballoc-x86_64.a");
-    if (fs::exists(directory / "network/xtls.cpp.o") || fs::exists(directory / "network/tls_runtime.cpp.o"))
-        require_file(directory / "libxnet.a");
-    for (const auto &entry : fs::recursive_directory_iterator(directory)) {
-        const fs::path path = entry.path();
-        const fs::path name = path.filename();
-        if (entry.is_regular_file() && path.extension() == ".o" &&
-            name != "start.cpp.o" && name != "constart.cpp.o")
-            result.objects.push_back(path.generic_u8string());
-    }
-    std::sort(result.objects.begin(), result.objects.end());
-    // Keep loose objects in their historical order. Archives follow all user
-    // inputs so GNU ld can resolve their dependencies without a second scan.
-    for (const char *name : {"libxnet.a", "libxmedia.a", "liballoc-x86_64.a"}) {
+    require_file(directory / "crt0.o");
+    require_file(directory / "libxact.a");
+    require_file(directory / "liballoc.a");
+    if (!profile.tui) require_file(directory / "libxgui.a");
+    result.objects.push_back((directory / "crt0.o").generic_u8string());
+    // Archives follow all user inputs so GNU ld can resolve their dependencies.
+    // libxact is core/TUI; libxgui is only pulled by GUI variants.
+    result.libraries.push_back((directory / "libxact.a").generic_u8string());
+    if (!profile.tui) result.libraries.push_back((directory / "libxgui.a").generic_u8string());
+    for (const char *name : {"libxnet.a", "libxmedia.a"}) {
         const fs::path library = directory / name;
         if (fs::is_regular_file(library)) result.libraries.push_back(library.u8string());
     }
+    result.libraries.push_back((directory / "liballoc.a").generic_u8string());
     return result;
 }
 
@@ -235,7 +234,7 @@ void help()
     std::cout << "XINGJI XJ380 C/C++ Compiler 2026v5\n"
                  "Usage: xxcc [options] files... [-o output]\n"
                  "  -c / -S / -E          Compile / emit assembly / preprocess only\n"
-                 "  --xxcc-sdk=PATH       SDK root containing include and obj-gui/obj-tui\n"
+                 "  --xxcc-sdk=PATH       SDK root containing include/ and lib/x86_64/\n"
                  "  --xxcc-save-temps     Keep intermediate objects for debugging\n"
                  "  -v                    Show commands (alone: show version)\n"
                  "  --version             Show version\n"

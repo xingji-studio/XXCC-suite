@@ -50,13 +50,11 @@ class DriverRegressions(DriverCase):
         super().setUp()
         self.sdk = self.work / "SDK 空格"
         (self.sdk / "include").mkdir(parents=True)
-        for kind, startup in (("gui", "start.cpp.o"), ("tui", "constart.cpp.o")):
-            directory = self.sdk / ("obj-" + kind)
-            for item in (startup, "arch/x86_64/crt0.S.o", "network/xtls.cpp.o",
-                         "libxnet.a", "libxmedia.a", "liballoc-x86_64.a"):
-                path = directory / item
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.touch()
+        directory = self.sdk / "lib" / "x86_64"
+        directory.mkdir(parents=True)
+        for item in ("start.o", "constart.o", "crt0.o", "libxact.a", "libxgui.a",
+                     "libxnet.a", "libxmedia.a", "liballoc.a"):
+            (directory / item).touch()
         self.log = self.work / "calls.jsonl"
         self.tmpdir = self.work / "temporary files"
         self.tmpdir.mkdir()
@@ -104,11 +102,17 @@ class DriverRegressions(DriverCase):
                 self.assertIn("-std=c11" if name.endswith("--") else "-std=c++11", compile_call["args"])
                 self.assertIn("-ffreestanding", compile_call["args"])
                 self.assertIn("-fshort-wchar", compile_call["args"])
-                runtime = self.sdk / ("obj-tui" if name.startswith("xxccte") else "obj-gui")
-                startup = "constart.cpp.o" if name.startswith("xxccte") else "start.cpp.o"
+                runtime = self.sdk / "lib" / "x86_64"
+                startup = "constart.o" if name.startswith("xxccte") else "start.o"
                 self.assertIn(str(runtime / startup), link_call["args"])
                 self.assertIn(str(runtime / "libxnet.a"), link_call["args"])
-                self.assertIn(str(runtime / "arch/x86_64/crt0.S.o"), link_call["args"])
+                self.assertIn(str(runtime / "crt0.o"), link_call["args"])
+                self.assertIn(str(runtime / "libxact.a"), link_call["args"])
+                self.assertIn(str(runtime / "liballoc.a"), link_call["args"])
+                if name.startswith("xxccte"):
+                    self.assertNotIn(str(runtime / "libxgui.a"), link_call["args"])
+                else:
+                    self.assertIn(str(runtime / "libxgui.a"), link_call["args"])
                 self.assertTrue((self.work / ("a.elf" if "-elf" in name else "a.epf")).exists())
         self.assert_clean()
 
@@ -237,14 +241,14 @@ class DriverRegressions(DriverCase):
         self.assertIn(str(self.sdk / "include"), self.calls()[0]["args"])
 
     def test_missing_runtime_library_fails_before_compilation(self):
-        (self.sdk / "obj-gui/libxnet.a").unlink()
+        (self.sdk / "lib/x86_64/libxact.a").unlink()
         result = self.run_driver(["main.cpp"])
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("libxnet.a", result.stderr)
+        self.assertIn("libxact.a", result.stderr)
         self.assertEqual(self.calls(), [])
 
     def test_compile_only_does_not_require_runtime(self):
-        shutil.rmtree(self.sdk / "obj-gui")
+        shutil.rmtree(self.sdk / "lib")
         self.success(self.run_driver(["main.cpp", "-c", "-o", "main.o"]))
         self.assertEqual([c["stage"] for c in self.calls()], ["compile"])
         self.assertTrue((self.work / "main.o").exists())
@@ -269,7 +273,7 @@ class DriverRegressions(DriverCase):
         (self.work / "custom.a").touch()
         self.success(self.run_driver(["main.cpp", "helper.o", "custom.a", "-L", "libs with spaces", "-lfoo", "-Wl,--gc-sections", "-Xlinker", "--no-undefined"]))
         args = self.calls()[-1]["args"]
-        ordered = [str(self.work / "helper.o"), str(self.work / "custom.a"), "-L", "libs with spaces", "-lfoo", "--gc-sections", "--no-undefined", str(self.sdk / "obj-gui/libxnet.a")]
+        ordered = [str(self.work / "helper.o"), str(self.work / "custom.a"), "-L", "libs with spaces", "-lfoo", "--gc-sections", "--no-undefined", str(self.sdk / "lib/x86_64/libxnet.a")]
         self.assertEqual([args.index(item) for item in ordered], sorted(args.index(item) for item in ordered))
 
     def test_no_source_overwrite(self):
@@ -319,10 +323,12 @@ class RealToolchain(DriverCase):
                 self.success(self.run_driver(["-O2", source, "-o", output], name=name))
                 self.assertEqual(output.read_bytes()[:4], b"\x7fELF")
                 if shutil.which("readelf"):
-                    header = subprocess.check_output(["readelf", "-h", output], text=True)
-                    sections = subprocess.check_output(["readelf", "-SW", output], text=True)
-                    symbols = subprocess.check_output(["readelf", "-sW", output], text=True)
-                    segments = subprocess.check_output(["readelf", "-lW", output], text=True)
+                    # Keep readelf output parseable regardless of the host locale.
+                    readelf_env = dict(os.environ, LC_ALL="C", LANG="C")
+                    header = subprocess.check_output(["readelf", "-h", output], text=True, env=readelf_env)
+                    sections = subprocess.check_output(["readelf", "-SW", output], text=True, env=readelf_env)
+                    symbols = subprocess.check_output(["readelf", "-sW", output], text=True, env=readelf_env)
+                    segments = subprocess.check_output(["readelf", "-lW", output], text=True, env=readelf_env)
                     self.assertIn("ELF64", header)
                     self.assertIn("Advanced Micro Devices X86-64", header)
                     self.assertRegex(sections, r"\]\s+\.text\s+PROGBITS\s+0*200000\b")
