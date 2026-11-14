@@ -169,7 +169,7 @@ Runtime load_runtime(const fs::path &sdk, const Profile &profile)
     // libxact is core/TUI; libxgui is only pulled by GUI variants.
     result.libraries.push_back((directory / "libxact.a").generic_u8string());
     if (!profile.tui) result.libraries.push_back((directory / "libxgui.a").generic_u8string());
-    for (const char *name : {"libxnet.a", "libxmedia.a"}) {
+    for (const char *name : {"libxnetapi.a", "libxnet.a", "libxmedia.a"}) {
         const fs::path library = directory / name;
         if (fs::is_regular_file(library)) result.libraries.push_back(library.u8string());
     }

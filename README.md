@@ -85,6 +85,7 @@ lib/x86_64/
     constart.o
     libxact.a
     libxgui.a
+    libxnetapi.a
     libxnet.a
     libxmedia.a
     liballoc.a
