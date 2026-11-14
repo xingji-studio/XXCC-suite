@@ -6,7 +6,7 @@ XXCC 自带的 XACT CRT 运行时：
   来自上游 `XJ380-SDK` 的运行时构建。
 - `liballoc.a` 是 `plos-clan/liballoc` 的 release 资产（MIT，talc C binding），
   与官方 XACT 发行包及 `OpenXJ380/liballoc-x86_64.a` 字节级一致。
-  `XACT-CRT` 以 `third_party/liballoc` submodule 为源码；本目录是下游预编译分发。
+  `XJ380-SDK` 以 `third_party/liballoc` submodule 为源码；本目录是下游预编译分发。
 - `libxnet.a`、`libxmedia.a` 来自官方 XACT 发行包的预编译归档，
   因为对应的 third_party 源码不在本仓库。
 - `libxnetapi.a` 由官方 XACT 发行包的 `network/*.o` 与 `webrequest.cpp.o`

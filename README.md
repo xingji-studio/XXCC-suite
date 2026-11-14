@@ -94,7 +94,7 @@ lib/x86_64/
 `xxcc` / `xxcc-elf` 等 GUI 入口链接 `start.o` + `libxgui.a`；
 `xxccte` / `xxccte-elf` 等终端入口链接 `constart.o`，不链接 `libxgui.a`。
 显式 SDK 路径无效时直接报错，不回退到其他 SDK；查找不依赖调用者的工作目录。
-SDK 头文件和运行库本身由操作系统项目（XACT-CRT）维护。
+SDK 头文件和运行库本身由操作系统项目（XJ380-SDK）维护。
 
 ```sh
 xxcc --xxcc-sdk="/path/to/SDK" main.cpp -o app.epf
