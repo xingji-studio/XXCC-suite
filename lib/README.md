@@ -11,4 +11,4 @@ XXCC 自带的 XACT CRT 运行时：
   因为对应的 third_party 源码不在本仓库。
 
 GUI 入口链接 `start.o + libxgui.a`；终端入口链接 `constart.o`，
-不链接 `libxgui.a`。完整 CRT 由下游 `XACT-CRT` 组合和打包。
+不链接 `libxgui.a`。完整 CRT 由 `XJ380-SDK` 组合和打包（`out/crt` 与 `xact-crt` xbps）。
