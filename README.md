@@ -16,14 +16,14 @@ Linux 产物在 `release/linux/`，Windows 产物在 `release/windows/`（带 `.
 
 | 命令 | 默认语言 | 启动对象 | 默认输出 |
 | --- | --- | --- | --- |
-| xxcc | C++11 | obj-gui/start.cpp.o | a.epf |
-| xxcc-- | C11 | obj-gui/start.cpp.o | a.epf |
-| xxcc-elf | C++11 | obj-gui/start.cpp.o | a.elf |
-| xxcc-elf-- | C11 | obj-gui/start.cpp.o | a.elf |
-| xxccte | C++11 | obj-tui/constart.cpp.o | a.epf |
-| xxccte-- | C11 | obj-tui/constart.cpp.o | a.epf |
-| xxccte-elf | C++11 | obj-tui/constart.cpp.o | a.elf |
-| xxccte-elf-- | C11 | obj-tui/constart.cpp.o | a.elf |
+| xxcc | C++11 | lib/x86_64/start.o | a.epf |
+| xxcc-- | C11 | lib/x86_64/start.o | a.epf |
+| xxcc-elf | C++11 | lib/x86_64/start.o | a.elf |
+| xxcc-elf-- | C11 | lib/x86_64/start.o | a.elf |
+| xxccte | C++11 | lib/x86_64/constart.o | a.epf |
+| xxccte-- | C11 | lib/x86_64/constart.o | a.epf |
+| xxccte-elf | C++11 | lib/x86_64/constart.o | a.elf |
+| xxccte-elf-- | C11 | lib/x86_64/constart.o | a.elf |
 
 保留 `make linux`、`make win`、`make xj380` 目标。这些目标选择输出目录和扩展名；编译器必须能生成所选宿主平台的程序，Windows/Linux 配置与编译器不匹配时会明确报错。例如，在 Windows 的 MinGW/GNU Make 环境运行 `make win`，或在 Linux 使用完整的 MinGW 交叉工具链：
 
@@ -75,7 +75,25 @@ SDK 查找优先级为：
 2. 环境变量 `XXCC_SDK_ROOT`。
 3. 可执行文件所在目录及其上三级目录，兼容本仓库的 `release/linux`、`release/windows` 布局。
 
-SDK 根目录包含 `include/` 和所选的 `obj-gui/` 或 `obj-tui/`。显式 SDK 路径无效时直接报错，不回退到其他 SDK；查找不依赖调用者的工作目录。SDK 头文件和运行库本身由操作系统项目维护。
+SDK 根目录使用 XACT CRT 布局：
+
+```
+include/
+lib/x86_64/
+    crt0.o
+    start.o
+    constart.o
+    libxact.a
+    libxgui.a
+    libxnet.a
+    libxmedia.a
+    liballoc.a
+```
+
+`xxcc` / `xxcc-elf` 等 GUI 入口链接 `start.o` + `libxgui.a`；
+`xxccte` / `xxccte-elf` 等终端入口链接 `constart.o`，不链接 `libxgui.a`。
+显式 SDK 路径无效时直接报错，不回退到其他 SDK；查找不依赖调用者的工作目录。
+SDK 头文件和运行库本身由操作系统项目（XACT-CRT）维护。
 
 ```sh
 xxcc --xxcc-sdk="/path/to/SDK" main.cpp -o app.epf
